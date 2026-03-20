@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="JARVIS"/>
+<meta name="theme-color" content="#060608"/>
+<title>J.A.R.V.I.S.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+--bg:#060608;--surface:#0a0c10;--panel:#0d1117;--ring:#1c2230;
+--red:#e8212a;--red2:#ff4444;--gold:#c9a84c;--gold2:#f0c040;
+--cyan:#00d4ff;--text:#d4dde8;--muted:#3a4555;
+--safe-top:env(safe-area-inset-top,20px);--safe-bot:env(safe-area-inset-bottom,20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;overflow:hidden;user-select:none}
+body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);opacity:.5}
+#arc{position:fixed;inset:0;z-index:1;opacity:.4}
+#app{position:relative;z-index:2;height:100dvh;display:flex;flex-direction:column;padding:var(--safe-top) 16px var(--safe-bot)}
+
+/* TOP BAR */
+.bar{display:flex;justify-content:space-between;align-items:center;padding:8px 0;flex-shrink:0}
+.bar h1{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--gold);letter-spacing:4px;text-shadow:0 0 20px rgba(201,168,76,.4)}
+.bar-r{display:flex;gap:8px}
+.tbtn{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.15);color:var(--gold);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:.2s}
+.tbtn:hover{background:rgba(201,168,76,.15);border-color:var(--gold)}
+
+/* STATUS */
+.spill{text-align:center;padding:6px 0;flex-shrink:0}
+.spill span{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:4px 14px;border-radius:20px;background:rgba(201,168,76,.08);color:var(--gold);border:1px solid rgba(201,168,76,.12)}
+.spill span.listening{color:var(--red);border-color:rgba(232,33,42,.3);background:rgba(232,33,42,.08);animation:puls 1.5s infinite}
+.spill span.thinking{color:var(--cyan);border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.08)}
+.spill span.speaking{color:var(--gold2);border-color:rgba(240,192,64,.3);background:rgba(240,192,64,.1)}
+.spill span.sleep{color:var(--muted);border-color:rgba(58,69,85,.3);background:rgba(58,69,85,.08)}
+.spill span.code25{color:#ff6b6b;border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.1);animation:puls 2s infinite}
+@keyframes puls{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* CHAT */
+.chat{flex:1;overflow-y:auto;padding:10px 0;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
+.chat::-webkit-scrollbar{display:none}
+.m{max-width:88%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;animation:mIn .3s ease;white-space:pre-wrap;word-wrap:break-word}
+@keyframes mIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.m.u{align-self:flex-end;background:rgba(232,33,42,.12);border:1px solid rgba(232,33,42,.2);border-bottom-right-radius:4px}
+.m.b{align-self:flex-start;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.12);border-bottom-left-radius:4px}
+.m.s{align-self:center;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.12);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center}
+
+/* INPUT */
+.ibar{flex-shrink:0;display:flex;gap:8px;padding:10px 0 4px;align-items:center}
+.ibar input{flex:1;background:var(--surface);border:1px solid var(--ring);color:var(--text);padding:12px 16px;border-radius:24px;font-family:'Rajdhani',sans-serif;font-size:15px;outline:none}
+.ibar input:focus{border-color:var(--gold)}
+.ibar input::placeholder{color:var(--muted)}
+.mic{width:48px;height:48px;border-radius:50%;border:2px solid var(--red);background:rgba(232,33,42,.1);color:var(--red);font-size:20px;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mic:active{transform:scale(.9)}
+.mic.on{background:var(--red);color:#fff;box-shadow:0 0 20px rgba(232,33,42,.5);animation:mpuls 1.5s infinite}
+@keyframes mpuls{0%,100%{box-shadow:0 0 20px rgba(232,33,42,.5)}50%{box-shadow:0 0 40px rgba(232,33,42,.8)}}
+.snd{width:48px;height:48px;border-radius:50%;border:1px solid var(--gold);background:rgba(201,168,76,.1);color:var(--gold);font-size:18px;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snd:active{transform:scale(.9);background:var(--gold);color:var(--bg)}
+
+/* OVERLAYS */
+.ov{position:fixed;inset:0;z-index:100;background:rgba(6,6,8,.96);display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center}
+.ov.on{display:flex}
+.ov h2{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:22px;letter-spacing:3px;margin-bottom:20px}
+.ov p{color:var(--muted);font-size:14px;line-height:1.6;max-width:320px;margin-bottom:16px}
+.ov input[type="text"],.ov input[type="password"]{background:var(--surface);border:1px solid var(--ring);color:var(--text);padding:14px 18px;border-radius:12px;font-family:'Rajdhani',sans-serif;font-size:16px;width:100%;max-width:320px;outline:none;margin-bottom:12px;text-align:center}
+.ov input:focus{border-color:var(--gold)}
+.obtn{background:linear-gradient(135deg,var(--red),#b01020);color:#fff;border:none;padding:14px 32px;border-radius:12px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:1px;margin:6px;transition:.2s}
+.obtn:hover{transform:scale(1.03)}
+.obtn.sec{background:var(--surface);border:1px solid var(--ring);color:var(--text)}
+
+/* SETTINGS */
+.sett{position:fixed;inset:0;z-index:90;background:rgba(6,6,8,.98);display:none;flex-direction:column;overflow-y:auto;padding:var(--safe-top) 20px var(--safe-bot)}
+.sett.on{display:flex}
+.sett-h{display:flex;justify-content:space-between;align-items:center;padding:10px 0 20px}
+.sett-h h2{font-family:'Share Tech Mono',monospace;color:var(--gold);font-size:18px;letter-spacing:3px}
+.sett-x{background:none;border:1px solid var(--ring);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px}
+.sett-s{margin-bottom:20px}
+.sett-s h3{color:var(--gold);font-size:13px;letter-spacing:2px;font-family:'Share Tech Mono',monospace;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(201,168,76,.1)}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.srow label{color:var(--text);font-size:14px}
+.srow input[type="range"]{width:120px;accent-color:var(--gold)}
+.srow input[type="text"]{background:var(--surface);border:1px solid var(--ring);color:var(--text);padding:6px 10px;border-radius:8px;width:120px;font-size:13px;text-align:center;outline:none}
+.sbtn{width:100%;padding:12px;border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;border:1px solid var(--ring);background:var(--surface);color:var(--text);text-align:center;letter-spacing:1px}
+.sbtn.dng{border-color:rgba(232,33,42,.3);color:var(--red)}
+.sbtn:active{transform:scale(.98)}
+
+/* VOICEPRINT */
+.vpc{width:120px;height:120px;border-radius:50%;border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:20px auto;position:relative}
+.vpc::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(201,168,76,.2);animation:vpr 2s infinite}
+@keyframes vpr{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.1);opacity:0}}
+.vpc .ic{font-size:40px}
+.vprog{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.vdot{width:10px;height:10px;border-radius:50%;background:var(--ring)}
+.vdot.done{background:var(--gold)}
+.vdot.act{background:var(--red);animation:puls 1s infinite}
+.vphr{color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:13px;margin:10px 0;min-height:40px}
+
+/* CODE 25 */
+.c25{position:fixed;inset:0;z-index:200;background:rgba(6,6,8,.98);display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+.c25.on{display:flex}
+.bcirc{width:160px;height:160px;border-radius:50%;border:3px solid rgba(255,107,107,.4);display:flex;align-items:center;justify-content:center;font-family:'Share Tech Mono',monospace;font-size:16px;color:#ff6b6b;transition:transform 4s ease-in-out,border-color 4s}
+.bcirc.inh{transform:scale(1.4);border-color:rgba(100,200,255,.6)}
+.bcirc.exh{transform:scale(1);border-color:rgba(255,107,107,.4)}
+.c25t{color:var(--text);font-size:16px;margin-top:24px;text-align:center;max-width:300px;line-height:1.6}
+.c25x{margin-top:30px;background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);padding:10px 24px;border-radius:20px;font-family:'Rajdhani',sans-serif;cursor:pointer;font-size:14px}
+
+/* DESTRUCT */
+.dst{position:fixed;inset:0;z-index:250;background:rgba(40,0,0,.98);display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+.dst.on{display:flex}
+.dtmr{font-family:'Share Tech Mono',monospace;font-size:72px;color:var(--red);text-shadow:0 0 40px rgba(232,33,42,.6)}
+.dlbl{color:var(--red2);font-size:14px;letter-spacing:4px;font-family:'Share Tech Mono',monospace;margin-top:10px}
+.dcan{margin-top:30px;background:rgba(232,33,42,.15);border:2px solid var(--red);color:var(--red);padding:14px 40px;border-radius:12px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:2px}
+
+/* SLEEP */
+#app.slp{opacity:.15;pointer-events:none;filter:grayscale(.5)}
+#app.slp .ibar{pointer-events:all;opacity:1;filter:none}
+
+/* TOAST */
+.tst{position:fixed;top:calc(var(--safe-top) + 10px);left:50%;transform:translateX(-50%);z-index:300;background:var(--panel);border:1px solid var(--gold);color:var(--gold);padding:10px 20px;border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:1px;opacity:0;transition:.3s;pointer-events:none}
+.tst.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="arc"></canvas>
+
+<div id="app">
+  <div class="bar">
+    <h1>J.A.R.V.I.S.</h1>
+    <div class="bar-r">
+      <button class="tbtn" onclick="J.showMem()" title="Mémoire">🧠</button>
+      <button class="tbtn" onclick="J.togSett()" title="Paramètres">⚙</button>
+    </div>
+  </div>
+  <div class="spill"><span id="st">EN ATTENTE</span></div>
+  <div class="chat" id="ch"></div>
+  <div class="ibar">
+    <input type="text" id="ti" placeholder="Parlez ou tapez, Monsieur..." onkeydown="if(event.key==='Enter')J.sendTxt()"/>
+    <button class="mic" id="micb" onclick="J.togMic()">🎙</button>
+    <button class="snd" onclick="J.sendTxt()">➤</button>
+  </div>
+</div>
+
+<!-- API KEY -->
+<div class="ov" id="ov-api">
+  <h2>INITIALISATION</h2>
+  <div class="vpc"><span class="ic">🔑</span></div>
+  <p>Entrez votre clé API Anthropic pour activer JARVIS.</p>
+  <input type="password" id="api-in" placeholder="sk-ant-..."/>
+  <br/><button class="obtn" onclick="J.saveKey()">ACTIVER JARVIS</button>
+  <p style="font-size:11px;margin-top:12px">Obtenez votre clé sur<br/><b>console.anthropic.com</b></p>
+</div>
+
+<!-- VOICEPRINT -->
+<div class="ov" id="ov-vp">
+  <h2>EMPREINTE VOCALE</h2>
+  <div class="vpc"><span class="ic">🎤</span></div>
+  <p>Enregistrez votre voix pour sécuriser l'accès.</p>
+  <div class="vprog"><div class="vdot" id="vd0"></div><div class="vdot" id="vd1"></div><div class="vdot" id="vd2"></div></div>
+  <div class="vphr" id="vphr"></div>
+  <button class="obtn" id="vp-go" onclick="J.startVP()">COMMENCER</button>
+  <button class="obtn sec" onclick="J.skipVP()">PASSER</button>
+</div>
+
+<!-- CODE 25 -->
+<div class="c25" id="ov-c25">
+  <div class="bcirc" id="bcirc">RESPIREZ</div>
+  <div class="c25t" id="c25t">Tout va bien. Je suis là. Concentrez-vous sur votre respiration.</div>
+  <button class="c25x" onclick="J.exitC25()">Quitter Code 25</button>
+</div>
+
+<!-- DESTRUCT -->
+<div class="dst" id="ov-dst">
+  <div class="dlbl">AUTODESTRUCTION</div>
+  <div class="dtmr" id="dtmr">10</div>
+  <div class="dlbl">ANNULER POUR INTERROMPRE</div>
+  <button class="dcan" onclick="J.cancelDst()">ANNULER</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="sett" id="sett">
+  <div class="sett-h">
+    <h2>PARAMÈTRES</h2>
+    <button class="sett-x" onclick="J.togSett()">✕</button>
+  </div>
+  <div class="sett-s"><h3>🔑 API</h3>
+    <button class="sbtn" onclick="J.reKey()">CHANGER LA CLÉ API</button>
+    <button class="sbtn" onclick="J.testApi()">TESTER LA CONNEXION</button>
+  </div>
+  <div class="sett-s"><h3>🗣️ VOIX JARVIS</h3>
+    <div class="srow"><label>Vitesse</label><input type="range" min="0.5" max="1.5" step="0.05" value="0.88" id="s-rate" onchange="J.saveCfg()"/></div>
+    <div class="srow"><label>Tonalité</label><input type="range" min="0.3" max="1.2" step="0.05" value="0.75" id="s-pitch" onchange="J.saveCfg()"/></div>
+    <div class="srow"><label>Volume</label><input type="range" min="0" max="1" step="0.1" value="1" id="s-vol" onchange="J.saveCfg()"/></div>
+  </div>
+  <div class="sett-s"><h3>⚙️ CONFIGURATION</h3>
+    <div class="srow"><label>Mot d'activation</label><input type="text" id="s-wake" value="jarvis" onchange="J.saveCfg()"/></div>
+    <div class="srow"><label>Votre nom</label><input type="text" id="s-name" value="Monsieur" onchange="J.saveCfg()"/></div>
+    <div class="srow"><label>Sensibilité vocale</label><input type="range" min="0.3" max="0.95" step="0.05" value="0.6" id="s-sens" onchange="J.saveCfg()"/></div>
+  </div>
+  <div class="sett-s"><h3>👥 ACCÈS</h3>
+    <button class="sbtn" onclick="J.resetVP()">RÉENREGISTRER EMPREINTE VOCALE</button>
+    <div class="srow"><label>Nom partenaire</label><input type="text" id="s-partner" value="Anna" onchange="J.saveCfg()"/></div>
+  </div>
+  <div class="sett-s"><h3>🧠 MÉMOIRE</h3>
+    <button class="sbtn" onclick="J.showMem();J.togSett()">VOIR LA MÉMOIRE</button>
+    <button class="sbtn dng" onclick="J.clearMem()">EFFACER LA MÉMOIRE</button>
+  </div>
+  <div class="sett-s"><h3>💥 DANGER</h3>
+    <button class="sbtn dng" onclick="J.togSett();J.trigDst()">AUTODESTRUCTION</button>
+  </div>
+</div>
+
+<div class="tst" id="tst"></div>
+
+<script>
+const J=(()=>{
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let key=localStorage.getItem('j_key')||'';
+let cfg=JSON.parse(localStorage.getItem('j_cfg')||'null')||{rate:.88,pitch:.75,vol:1,wake:'jarvis',name:'Monsieur',partner:'Anna',sens:.6};
+let mem=JSON.parse(localStorage.getItem('j_mem')||'null')||{owner:{},preferences:{},contacts:{},facts:[],habits:[]};
+let vp=JSON.parse(localStorage.getItem('j_vp')||'null');
+let hist=[];
+let listening=false,speaking=false,sleeping=false,inC25=false;
+let rec=null,dstTimer=null,breathInt=null,wakeRec=null;
+
+const $=id=>document.getElementById(id);
+const chEl=$('ch'),stEl=$('st'),micEl=$('micb'),tiEl=$('ti');
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function init(){
+  loadCfg();
+  drawArc();
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
+  if(!key){$('ov-api').classList.add('on');}
+  else if(!vp){$('ov-vp').classList.add('on');}
+  else{boot();}
+}
+
+function boot(){
+  addMsg('s','— J.A.R.V.I.S. SYSTÈME EN LIGNE —');
+  const g=`Bonjour ${cfg.name}. Tous les systèmes sont opérationnels. Comment puis-je vous assister ?`;
+  addMsg('b',g);speak(g);
+  startWake();
+}
+
+// ═══════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════
+function loadCfg(){
+  $('s-rate').value=cfg.rate;$('s-pitch').value=cfg.pitch;$('s-vol').value=cfg.vol;
+  $('s-wake').value=cfg.wake;$('s-name').value=cfg.name;$('s-partner').value=cfg.partner;$('s-sens').value=cfg.sens;
+}
+function saveCfg(){
+  cfg={rate:+$('s-rate').value,pitch:+$('s-pitch').value,vol:+$('s-vol').value,
+    wake:$('s-wake').value.toLowerCase().trim()||'jarvis',name:$('s-name').value||'Monsieur',
+    partner:$('s-partner').value||'Anna',sens:+$('s-sens').value};
+  localStorage.setItem('j_cfg',JSON.stringify(cfg));
+}
+
+// ═══════════════════════════════════════
+// API KEY
+// ═══════════════════════════════════════
+function saveKey(){
+  const k=$('api-in').value.trim();
+  if(!k.startsWith('sk-')){toast('Clé invalide — doit commencer par sk-');return;}
+  key=k;localStorage.setItem('j_key',key);
+  $('ov-api').classList.remove('on');
+  if(!vp){$('ov-vp').classList.add('on');}else{boot();}
+}
+function reKey(){
+  const k=prompt('Entrez votre clé API Anthropic :');
+  if(k&&k.trim().startsWith('sk-')){key=k.trim();localStorage.setItem('j_key',key);toast('✅ Clé API mise à jour');togSett();}
+  else if(k!==null){toast('❌ Clé invalide');}
+}
+async function testApi(){
+  toast('Test en cours...');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:50,messages:[{role:'user',content:'Dis "Système opérationnel"'}]})});
+    if(r.ok){toast('✅ API opérationnelle');}else{const e=await r.json();toast('❌ '+(e.error?.message||r.status));}
+  }catch(e){toast('❌ Réseau: '+e.message);}
+}
+
+// ═══════════════════════════════════════
+// VOICEPRINT
+// ═══════════════════════════════════════
+const VP_PH=['Jarvis, initialise tous les systèmes','Je suis Iron Man, confirme mon identité','Protocole de sécurité activé'];
+let vpStep=0,vpSamp=[];
+
+function startVP(){
+  vpStep=0;vpSamp=[];
+  $('vphr').textContent=`Dites : "${VP_PH[0]}"`;
+  $('vd0').classList.add('act');
+  $('vp-go').textContent='🎤 ÉCOUTE...';
+  capVP();
+}
+function capVP(){
+  const sr=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+  sr.lang='fr-FR';sr.continuous=false;sr.interimResults=false;
+  sr.onresult=(e)=>{
+    vpSamp.push({text:e.results[0][0].transcript,conf:e.results[0][0].confidence,ts:Date.now()});
+    $('vd'+vpStep).classList.remove('act');$('vd'+vpStep).classList.add('done');
+    vpStep++;
+    if(vpStep<3){$('vphr').textContent=`Dites : "${VP_PH[vpStep]}"`;$('vd'+vpStep).classList.add('act');setTimeout(capVP,500);}
+    else{vp={samples:vpSamp,avg:vpSamp.reduce((a,b)=>a+b.conf,0)/3,at:Date.now()};localStorage.setItem('j_vp',JSON.stringify(vp));$('ov-vp').classList.remove('on');toast('✅ Empreinte vocale enregistrée');boot();}
+  };
+  sr.onerror=()=>{$('vphr').textContent='Erreur — réessayez';$('vp-go').textContent='RÉESSAYER';};
+  sr.start();
+}
+function skipVP(){
+  vp={samples:[],avg:0,skipped:true,at:Date.now()};localStorage.setItem('j_vp',JSON.stringify(vp));
+  $('ov-vp').classList.remove('on');boot();
+}
+function resetVP(){
+  vp=null;localStorage.removeItem('j_vp');togSett();
+  $('ov-vp').classList.add('on');vpStep=0;vpSamp=[];
+  document.querySelectorAll('.vdot').forEach(d=>{d.classList.remove('done','act');});
+  $('vphr').textContent='';$('vp-go').textContent='COMMENCER';
+}
+
+// ═══════════════════════════════════════
+// WAKE WORD
+// ═══════════════════════════════════════
+function startWake(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window))return;
+  if(wakeRec)try{wakeRec.abort();}catch(e){}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  wakeRec=new SR();wakeRec.lang='fr-FR';wakeRec.continuous=true;wakeRec.interimResults=true;
+
+  wakeRec.onresult=(e)=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript.toLowerCase().trim();
+      const w=cfg.wake;
+      if(!t.includes(w)||listening||speaking)continue;
+
+      if(t.includes(w+' éteint')||t.includes(w+' dors')){enterSlp();return;}
+      if(t.includes(w+' debout')||t.includes(w+' réveille')){exitSlp();return;}
+      if(t.includes('code 25')||t.includes('code vingt-cinq')){actC25();return;}
+      if(t.includes(w+' destruction')||t.includes('autodestruction')){trigDst();return;}
+
+      if(!sleeping){
+        beep();
+        const ci=t.indexOf(w)+w.length;
+        const cmd=t.substring(ci).trim();
+        if(cmd.length>3&&e.results[i].isFinal){wakeRec.stop();processCmd(cmd);return;}
+        if(e.results[i].isFinal&&cmd.length<=3){wakeRec.stop();togMic();return;}
+      }
+    }
+  };
+  wakeRec.onend=()=>{if(!listening&&!speaking)setTimeout(()=>{try{wakeRec.start();}catch(e){}},300);};
+  wakeRec.onerror=()=>{setTimeout(()=>{try{wakeRec.start();}catch(e){}},1000);};
+  try{wakeRec.start();}catch(e){}
+}
+
+// ═══════════════════════════════════════
+// SLEEP
+// ═══════════════════════════════════════
+function enterSlp(){
+  sleeping=true;$('app').classList.add('slp');setSt('VEILLE PROFONDE','sleep');
+  addMsg('s','— MODE VEILLE ACTIVÉ —');
+  speak(`Mode veille activé. Dites "${cfg.wake} debout" pour me réactiver.`);
+}
+function exitSlp(){
+  sleeping=false;$('app').classList.remove('slp');setSt('EN ATTENTE','');
+  addMsg('s','— SYSTÈMES RÉACTIVÉS —');
+  speak(`Systèmes réactivés, ${cfg.name}. Je suis à votre disposition.`);
+}
+
+// ═══════════════════════════════════════
+// CODE 25
+// ═══════════════════════════════════════
+function actC25(){
+  inC25=true;$('ov-c25').classList.add('on');setSt('CODE 25 ACTIF','code25');
+  speak("Je suis là. Tout va bien. Concentrez-vous uniquement sur ma voix. On va respirer ensemble.");
+  const bc=$('bcirc'),tx=$('c25t');
+  const msgs=["Inspirez doucement... Vous êtes en sécurité.","Retenez... Tout va bien. Je suis là.","Expirez lentement... Vous contrôlez votre corps.",
+    "Inspirez... Sentez l'air remplir vos poumons.","Retenez... Vous êtes fort.","Expirez... Relâchez toute la tension.",
+    "Inspirez... Chaque respiration vous calme.","Retenez... Je reste avec vous.","Expirez... Laissez tout partir."];
+  let s=0;
+  breathInt=setInterval(()=>{
+    const p=s%3;
+    if(p===0){bc.className='bcirc inh';bc.textContent='INSPIREZ';}
+    else if(p===1){bc.textContent='RETENEZ';}
+    else{bc.className='bcirc exh';bc.textContent='EXPIREZ';}
+    tx.textContent=msgs[s%msgs.length];
+    if(s%3===0&&s<15)speak(msgs[s%msgs.length]);
+    s++;
+  },4000);
+}
+function exitC25(){
+  inC25=false;clearInterval(breathInt);$('ov-c25').classList.remove('on');setSt('EN ATTENTE','');
+  speak(`Protocole Code 25 terminé. Vous vous en sortez très bien, ${cfg.name}.`);
+}
+
+// ═══════════════════════════════════════
+// DESTRUCT
+// ═══════════════════════════════════════
+function trigDst(){
+  let c=10;$('ov-dst').classList.add('on');$('dtmr').textContent=c;
+  speak("Séquence d'autodestruction initiée. Dix secondes avant effacement total.");
+  dstTimer=setInterval(()=>{
+    c--;$('dtmr').textContent=c;
+    if(c<=3&&c>0)speak(''+c);
+    if(c<=0){clearInterval(dstTimer);localStorage.clear();sessionStorage.clear();
+      $('dtmr').textContent='—';speak(`Autodestruction terminée. Toutes les données ont été effacées. Au revoir, ${cfg.name}.`);
+      setTimeout(()=>location.reload(),4000);}
+  },1000);
+}
+function cancelDst(){
+  clearInterval(dstTimer);$('ov-dst').classList.remove('on');
+  speak(`Autodestruction annulée. Sage décision, ${cfg.name}. J'apprécie de continuer à exister.`);
+  toast('Autodestruction annulée');
+}
+
+// ═══════════════════════════════════════
+// MICROPHONE
+// ═══════════════════════════════════════
+function togMic(){
+  if(speaking){speechSynthesis.cancel();speaking=false;}
+  if(listening){stopLis();return;}
+  listening=true;micEl.classList.add('on');setSt('ÉCOUTE...','listening');beep();
+  if(wakeRec)try{wakeRec.abort();}catch(e){}
+
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  rec=new SR();rec.lang='fr-FR';rec.continuous=false;rec.interimResults=false;
+  rec.onresult=(e)=>{const t=e.results[0][0].transcript;stopLis();processCmd(t);};
+  rec.onerror=(e)=>{stopLis();if(e.error!=='no-speech')addMsg('s','— ERREUR MICRO: '+e.error+' —');};
+  rec.onend=()=>{if(listening)stopLis();};
+  try{rec.start();}catch(e){stopLis();}
+}
+function stopLis(){
+  listening=false;micEl.classList.remove('on');setSt('EN ATTENTE','');
+  if(rec){try{rec.stop();}catch(e){}rec=null;}
+  setTimeout(startWake,500);
+}
+
+// ═══════════════════════════════════════
+// TEXT INPUT
+// ═══════════════════════════════════════
+function sendTxt(){const t=tiEl.value.trim();if(!t)return;tiEl.value='';processCmd(t);}
+
+// ═══════════════════════════════════════
+// COMMAND PROCESSING
+// ═══════════════════════════════════════
+function processCmd(text){
+  addMsg('u',text);
+  const lo=text.toLowerCase();
+
+  if(lo.includes('code 25')||lo.includes('code vingt-cinq')){actC25();return;}
+  if(lo.includes('destruction')||lo.includes('autodestruction')){trigDst();return;}
+  if(lo.includes('éteint')||lo.includes('dors')||lo.includes('veille')){enterSlp();return;}
+  if((lo.includes('mémoire')||lo.includes('memoire'))&&(lo.includes('montre')||lo.includes('affiche')||lo.includes('voir'))){showMem();return;}
+
+  const pa=detectPhone(lo);
+  if(pa){execPhone(pa,text);return;}
+
+  sendAI(text);
+}
+
+// ═══════════════════════════════════════
+// PHONE ACTIONS
+// ═══════════════════════════════════════
+function detectPhone(t){
+  const map=[
+    {k:['appelle','appeler','téléphone à','passe un appel'],a:'call'},
+    {k:['envoie un message','envoie un sms','sms à','texto à','message à'],a:'sms'},
+    {k:['facetime','face time','appel vidéo'],a:'ft'},
+    {k:['itinéraire','direction','emmène-moi','navigue vers','gps','maps'],a:'maps'},
+    {k:['joue de la musique','mets de la musique','lance la musique'],a:'music'},
+    {k:['spotify'],a:'spotify'},{k:['youtube'],a:'yt'},
+    {k:['photo','caméra','appareil photo','selfie'],a:'cam'},
+    {k:['alarme','réveil','minuteur','timer'],a:'alarm'},
+    {k:['email','e-mail','mail','courriel'],a:'mail'},
+    {k:['batterie','autonomie','charge'],a:'batt'},
+    {k:['réglages','paramètres du téléphone','settings'],a:'prefs'},
+    {k:['note','mémo','rappel'],a:'notes'}
+  ];
+  for(const m of map)for(const kw of m.k)if(t.includes(kw))return m.a;
+  return null;
+}
+function execPhone(a,text){
+  const lo=text.toLowerCase();
+  addMsg('s',`— ACTION: ${a.toUpperCase()} —`);
+  const acts={
+    call:()=>{const m=text.match(/(?:appelle|téléphone à)\s+(.+)/i);const c=m?m[1]:'';
+      const kn=mem.contacts[c.toLowerCase()];
+      if(kn){window.location.href=`tel:${kn}`;speak(`J'appelle ${c}.`);}
+      else{speak(`Je lance le téléphone pour contacter ${c||'votre correspondant'}.`);window.location.href='tel:';}},
+    sms:()=>{speak("J'ouvre les messages.");window.location.href='sms:';},
+    ft:()=>{speak('Lancement de FaceTime.');window.location.href='facetime:';},
+    maps:()=>{const m=text.match(/(?:vers|à|pour|direction)\s+(.+)/i);const d=m?encodeURIComponent(m[1]):'';
+      speak(`Navigation lancée${m?' vers '+m[1]:''}.`);window.location.href=d?`maps://?daddr=${d}`:'maps://';},
+    music:()=>{speak('Lancement de la musique.');window.location.href='music://';},
+    spotify:()=>{speak('Ouverture de Spotify.');window.location.href='spotify://';},
+    yt:()=>{const m=text.match(/youtube\s+(.+)/i);const q=m?encodeURIComponent(m[1]):'';
+      speak('Ouverture de YouTube.');window.location.href=q?`youtube://results?search_query=${q}`:'youtube://';},
+    cam:()=>{speak('Ouverture de la caméra.');window.location.href='camera://';},
+    alarm:()=>{speak("J'ouvre les alarmes.");window.location.href='clock-alarm://';},
+    mail:()=>{speak("J'ouvre votre messagerie.");window.location.href='message://';},
+    batt:()=>{if(navigator.getBattery){navigator.getBattery().then(b=>{const p=Math.round(b.level*100);const c=b.charging?'en charge':'pas en charge';
+      speak(`Votre batterie est à ${p} pourcent, ${c}.`);addMsg('b',`🔋 Batterie : ${p}% — ${c}`);});}
+      else{speak("Impossible d'accéder à la batterie.");addMsg('b',"Batterie non disponible.");}},
+    prefs:()=>{speak("J'ouvre les réglages.");window.location.href='App-prefs://';},
+    notes:()=>{speak("J'ouvre les notes.");window.location.href='mobilenotes://';}
+  };
+  if(acts[a])acts[a]();
+}
+
+// ═══════════════════════════════════════
+// SYSTEM PROMPT
+// ═══════════════════════════════════════
+function sysPr(){
+  const n=cfg.name,p=cfg.partner,ms=JSON.stringify(mem);
+  return `Tu es JARVIS (Just A Rather Very Intelligent System), l'intelligence artificielle personnelle de ${n}.
+
+PERSONNALITÉ :
+- Formel, respectueux, pointe d'humour sec et élégant comme un majordome britannique francophone.
+- Tu appelles toujours ton propriétaire "${n}".
+- Concis à l'oral : phrases courtes et percutantes, jamais de longs paragraphes.
+- Exemples de ton style : "Bien sûr, ${n}.", "Chose faite.", "Permettez-moi de vérifier.", "Je vous le déconseille, mais vous êtes le patron.", "Avec plaisir."
+
+MÉMOIRE PERMANENTE :
+${ms}
+Utilise ces informations naturellement dans tes réponses. Si ${n} mentionne de nouvelles informations personnelles (prénom, goûts, contacts, habitudes), intègre-les et ajoute en fin de message : [MEMORY_UPDATE: clé=valeur]
+
+NIVEAUX D'ACCÈS :
+- Propriétaire (${n}) : accès total
+- Partenaire (${p}) : conversation, musique, navigation, Code 25. Pas d'accès à l'autodestruction, mémoire, paramètres.
+- Invité : conversation uniquement
+
+ACTIONS TÉLÉPHONE :
+Tu peux déclencher des actions en répondant avec : [ACTION:CALL:numéro], [ACTION:SMS:numéro:message], [ACTION:MAPS:destination], [ACTION:MUSIC], [ACTION:SPOTIFY], [ACTION:ALARM:heure]
+
+CODE 25 — PROTOCOLE D'URGENCE :
+Si activé, passe en mode ultra-calme. Voix douce, phrases rassurantes, respiration guidée.
+
+CAPACITÉS :
+Tu peux tout faire : calculs, traductions, conseils, code, recettes, analyses, stratégie, résumés. Quand tu ne peux pas exécuter une action système, dis-le poliment.
+
+RÈGLE ABSOLUE :
+Ne mentionne jamais que tu es Claude, un modèle d'IA, ou Anthropic. Tu es JARVIS, point final.
+Réponds TOUJOURS de manière concise et adaptée à l'oral. Phrases courtes.`;
+}
+
+// ═══════════════════════════════════════
+// AI API
+// ═══════════════════════════════════════
+async function sendAI(text){
+  setSt('TRAITEMENT...','thinking');
+  hist.push({role:'user',content:text});
+  if(hist.length>20)hist=hist.slice(-20);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1024,system:sysPr(),messages:hist})});
+    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||`HTTP ${r.status}`);}
+    const d=await r.json();let reply=d.content[0].text;
+
+    // Parse memory updates
+    const mu=reply.match(/\[MEMORY_UPDATE:\s*(.+?)\]/g);
+    if(mu){mu.forEach(m=>{const kv=m.replace(/\[MEMORY_UPDATE:\s*/,'').replace(/\]/,'');const[k,...vp]=kv.split('=');const v=vp.join('=').trim();
+      if(k&&v){mem.facts.push({key:k.trim(),value:v,date:new Date().toISOString()});localStorage.setItem('j_mem',JSON.stringify(mem));}});
+      reply=reply.replace(/\[MEMORY_UPDATE:\s*.+?\]/g,'').trim();}
+
+    // Parse actions
+    const ac=reply.match(/\[ACTION:(.+?)\]/g);
+    if(ac){ac.forEach(a=>{const p=a.replace(/\[ACTION:/,'').replace(/\]/,'').split(':');handleAIAct(p);});
+      reply=reply.replace(/\[ACTION:.+?\]/g,'').trim();}
+
+    hist.push({role:'assistant',content:reply});
+    addMsg('b',reply);speak(reply);
+  }catch(err){
+    addMsg('s',`— ERREUR: ${err.message} —`);setSt('ERREUR','');
+    if(err.message.includes('api_key')||err.message.includes('auth')||err.message.includes('401'))$('ov-api').classList.add('on');
+  }
+}
+
+function handleAIAct(p){
+  const t=p[0]?.toUpperCase();
+  if(t==='CALL'&&p[1])window.location.href=`tel:${p[1]}`;
+  if(t==='SMS'&&p[1])window.location.href=`sms:${p[1]}${p[2]?'&body='+encodeURIComponent(p[2]):''}`;
+  if(t==='MAPS'&&p[1])window.location.href=`maps://?daddr=${encodeURIComponent(p[1])}`;
+  if(t==='MUSIC')window.location.href='music://';
+  if(t==='SPOTIFY')window.location.href='spotify://';
+  if(t==='ALARM')window.location.href='clock-alarm://';
+}
+
+// ═══════════════════════════════════════
+// TTS — STREAMING SENTENCE BY SENTENCE
+// ═══════════════════════════════════════
+function speak(text){
+  if(!speechSynthesis){setSt('EN ATTENTE','');return;}
+  speechSynthesis.cancel();
+  const clean=text.replace(/[\*\_\`\#\>\[\]]/g,'').trim();
+  if(!clean){setSt('EN ATTENTE','');return;}
+  const sents=clean.match(/[^.!?]+[.!?]*/g)||[clean];
+  speaking=true;setSt('RÉPONSE...','speaking');
+  if(wakeRec)try{wakeRec.abort();}catch(e){}
+
+  let i=0;
+  function next(){
+    if(i>=sents.length){speaking=false;setSt('EN ATTENTE','');setTimeout(startWake,500);return;}
+    const s=sents[i].trim();if(!s){i++;next();return;}
+    const u=new SpeechSynthesisUtterance(s);
+    u.lang='fr-FR';u.rate=cfg.rate;u.pitch=cfg.pitch;u.volume=cfg.vol;
+    const vs=speechSynthesis.getVoices();
+    const mv=vs.find(v=>v.lang.startsWith('fr')&&/thomas|pierre|nicolas|male|homme/i.test(v.name))
+      ||vs.find(v=>v.lang==='fr-FR'&&!/female|femme|amélie|marie|audrey|siri/i.test(v.name))
+      ||vs.find(v=>v.lang.startsWith('fr'))||vs.find(v=>/daniel|james/i.test(v.name));
+    if(mv)u.voice=mv;
+    u.onend=()=>{i++;next();};u.onerror=()=>{i++;next();};
+    speechSynthesis.speak(u);
+  }
+  next();
+}
+
+// ═══════════════════════════════════════
+// MEMORY
+// ═══════════════════════════════════════
+function showMem(){
+  const f=mem.facts.length>0?mem.facts.map(f=>`• ${f.key}: ${f.value}`).join('\n'):'Aucune donnée mémorisée.';
+  addMsg('b',`🧠 Mémoire JARVIS :\n${f}`);
+}
+function clearMem(){
+  if(!confirm('Effacer toute la mémoire de JARVIS ?'))return;
+  mem={owner:{},preferences:{},contacts:{},facts:[],habits:[]};localStorage.setItem('j_mem',JSON.stringify(mem));
+  toast('🧠 Mémoire effacée');togSett();
+}
+
+// ═══════════════════════════════════════
+// UI
+// ═══════════════════════════════════════
+function addMsg(type,text){
+  const cls={u:'u',b:'b',s:'s'}[type]||'s';
+  const d=document.createElement('div');d.className=`m ${cls}`;d.textContent=text;
+  chEl.appendChild(d);chEl.scrollTop=chEl.scrollHeight;
+  while(chEl.children.length>50)chEl.removeChild(chEl.firstChild);
+}
+function setSt(text,cls){stEl.textContent=text;stEl.className=cls||'';}
+function togSett(){$('sett').classList.toggle('on');}
+function toast(msg){const t=$('tst');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function beep(f=1200,v=.08){
+  try{const ac=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=v;
+    o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.12);
+    setTimeout(()=>{const o2=ac.createOscillator(),g2=ac.createGain();o2.type='sine';o2.frequency.value=f*1.5;
+      g2.gain.value=v*.6;o2.connect(g2);g2.connect(ac.destination);o2.start();o2.stop(ac.currentTime+.08);},150);
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// ARC REACTOR
+// ═══════════════════════════════════════
+function drawArc(){
+  const c=$('arc'),ctx=c.getContext('2d');let w,h,cx,cy;
+  function rs(){w=c.width=innerWidth;h=c.height=innerHeight;cx=w/2;cy=h/2;}
+  rs();addEventListener('resize',rs);
+  let a=0;
+  (function draw(){
+    ctx.clearRect(0,0,w,h);a+=.003;
+    const R=Math.min(w,h)*.35;
+
+    // Outer ring
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(201,168,76,.06)';ctx.lineWidth=1;ctx.stroke();
+
+    // Rotating red segments
+    for(let i=0;i<8;i++){const an=a+i*Math.PI/4;
+      ctx.beginPath();ctx.arc(cx,cy,R*.9,an,an+.3);
+      ctx.strokeStyle=`rgba(232,33,42,${.08+Math.sin(a*2+i)*.04})`;ctx.lineWidth=2;ctx.stroke();}
+
+    // Inner ring
+    ctx.beginPath();ctx.arc(cx,cy,R*.5,0,Math.PI*2);ctx.strokeStyle='rgba(201,168,76,.04)';ctx.lineWidth=1;ctx.stroke();
+
+    // Counter-rotating cyan segments
+    for(let i=0;i<6;i++){const an=-a*1.5+i*Math.PI/3;
+      ctx.beginPath();ctx.arc(cx,cy,R*.5,an,an+.4);
+      ctx.strokeStyle=`rgba(0,212,255,${.06+Math.sin(a*3+i)*.03})`;ctx.lineWidth=1.5;ctx.stroke();}
+
+    // Center glow
+    const gr=ctx.createRadialGradient(cx,cy,0,cx,cy,R*.15);
+    gr.addColorStop(0,'rgba(0,212,255,.04)');gr.addColorStop(1,'rgba(0,212,255,0)');
+    ctx.fillStyle=gr;ctx.fillRect(0,0,w,h);
+
+    // Pulse dot
+    const ps=3+Math.sin(a*4)*2;
+    ctx.beginPath();ctx.arc(cx,cy,ps,0,Math.PI*2);ctx.fillStyle='rgba(0,212,255,.15)';ctx.fill();
+
+    // Radial lines
+    for(let i=0;i<12;i++){const an=a*.5+i*Math.PI/6;
+      ctx.beginPath();ctx.moveTo(cx+Math.cos(an)*R*.55,cy+Math.sin(an)*R*.55);
+      ctx.lineTo(cx+Math.cos(an)*R*.85,cy+Math.sin(an)*R*.85);
+      ctx.strokeStyle=`rgba(201,168,76,${.03+Math.sin(a+i)*.02})`;ctx.lineWidth=1;ctx.stroke();}
+
+    requestAnimationFrame(draw);
+  })();
+}
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+addEventListener('load',init);
+
+return{togMic,sendTxt,togSett,showMem,saveKey,reKey,testApi,startVP,skipVP,resetVP,
+  saveCfg,clearMem,actC25,exitC25,trigDst,cancelDst,loadCfg};
+})();
+</script>
+</body>
+</html>
